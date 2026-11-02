@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Line Graph Word Quiz</title>
+<style>
+/* Layout: field-notebook feel; forest header, one question card at a time, study cards in a grid.
+   Theme: Forest & Magenta (new for this series). */
+:root{
+  --bg:#f1f5f2; --dot:rgba(31,92,63,.10); --card:#ffffff; --ink:#13261c; --muted:#57695f; --line:#d5e2d9;
+  --head:#1f5c3f; --onhead:#f4fbf6;
+  --pri:#1f7a4f; --onpri:#ffffff; --pri-soft:#dcefe3;
+  --pop:#c2185b; --onpop:#ffffff; --pop-soft:#fbe1ec;
+  --good:#1b7f4c; --good-soft:#dcf3e6; --bad:#b3362c; --bad-soft:#fbe3e0; --gold:#c98a00;
+  --font-display:"Trebuchet MS","Segoe UI",system-ui,sans-serif;
+  --font-body:"Segoe UI",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;
+  --font-ar:"Tahoma","Geeza Pro","Noto Naskh Arabic","Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0f1813; --dot:rgba(95,211,154,.07); --card:#18241d; --ink:#e9f3ec; --muted:#9fb3a7; --line:#2c3d33;
+  --head:#12351f; --onhead:#eefaf2; --pri:#5fd39a; --onpri:#0b1f14; --pri-soft:#173726;
+  --pop:#ff6fa5; --onpop:#2a0716; --pop-soft:#3a1626;
+  --good:#62d394; --good-soft:#12301f; --bad:#ff8f84; --bad-soft:#3a1a17; --gold:#f2c14e; color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#0f1813; --dot:rgba(95,211,154,.07); --card:#18241d; --ink:#e9f3ec; --muted:#9fb3a7; --line:#2c3d33;
+  --head:#12351f; --onhead:#eefaf2; --pri:#5fd39a; --onpri:#0b1f14; --pri-soft:#173726;
+  --pop:#ff6fa5; --onpop:#2a0716; --pop-soft:#3a1626;
+  --good:#62d394; --good-soft:#12301f; --bad:#ff8f84; --bad-soft:#3a1a17; --gold:#f2c14e; color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{font-size:18px}
+body{margin:0;font-family:var(--font-body);color:var(--ink);line-height:1.6;background-color:var(--bg);
+  background-image:radial-gradient(var(--dot) 1.5px,transparent 1.5px);background-size:22px 22px}
+h1,h2,h3{font-family:var(--font-display);line-height:1.25;margin:0;text-wrap:balance}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--pop);outline-offset:2px}
+.ar{direction:rtl;unicode-bidi:isolate;font-family:var(--font-ar);color:var(--muted)}
+.wrap{max-width:1000px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+
+header{background:var(--head);color:var(--onhead)}
+.hd{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;padding-block:14px}
+.hd .t{flex:1 1 260px;min-width:0}
+.hd h1{font-size:1.4rem}
+.hd small{opacity:.88;font-size:.84rem}
+.hd .ar{color:var(--onhead);opacity:.9}
+.stats{display:flex;gap:8px;flex-wrap:wrap}
+.pill{background:rgba(255,255,255,.14);border-radius:99px;padding:4px 12px;font-weight:700;font-size:.86rem;font-variant-numeric:tabular-nums}
+.tb{background:transparent;border:1.5px solid rgba(255,255,255,.55);color:var(--onhead);border-radius:10px;padding:5px 11px;font-size:.8rem;font-weight:600}
+.tabs{display:flex;gap:8px;padding-block:14px 4px;flex-wrap:wrap}
+.tab{border:2px solid var(--line);background:var(--card);border-radius:12px;padding:8px 16px;font-weight:700}
+.tab.on{border-color:var(--pri);box-shadow:0 0 0 3px var(--pri-soft)}
+main{padding-block:10px 40px}
+.view{display:none}.view.on{display:block}
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px 22px}
+.eyebrow{text-transform:uppercase;letter-spacing:.12em;font-size:.72rem;font-weight:800;color:var(--pop)}
+.btn{border:none;border-radius:11px;padding:10px 18px;font-weight:700;background:var(--pri);color:var(--onpri)}
+.btn:hover{filter:brightness(1.07)}
+.btn.pop{background:var(--pop);color:var(--onpop)}
+.btn.ghost{background:transparent;border:2px solid var(--pri);color:var(--pri)}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+
+/* home */
+.home{display:grid;gap:16px}
+.home h2{font-size:1.9rem;color:var(--pri)}
+.name-in{border:2px solid var(--line);border-radius:10px;padding:9px 12px;background:var(--bg);width:100%;max-width:380px}
+.types{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
+.type{border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--bg)}
+.type b{display:block;font-size:.95rem}
+.type span{font-size:.84rem;color:var(--muted)}
+
+/* study */
+.cats{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.cat{border:1.5px solid var(--line);background:var(--card);border-radius:99px;padding:5px 12px;font-size:.85rem;font-weight:700}
+.cat.on{background:var(--pri);border-color:var(--pri);color:var(--onpri)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
+.fc{perspective:900px;height:200px;border:none;background:none;padding:0;text-align:left}
+.fc .in{position:relative;width:100%;height:100%;transition:transform .5s;transform-style:preserve-3d}
+.fc.flip .in{transform:rotateY(180deg)}
+.fc .f,.fc .b{position:absolute;inset:0;backface-visibility:hidden;border-radius:14px;border:1.5px solid var(--line);padding:12px 14px;display:flex;flex-direction:column;gap:4px;background:var(--card);overflow:hidden}
+.fc .b{transform:rotateY(180deg);background:var(--pri-soft)}
+.fc .w{font-family:var(--font-display);font-size:1.2rem;font-weight:800;color:var(--ink)}
+.fc .g{font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;color:var(--pop);font-weight:800}
+.fc .tap{margin-top:auto;font-size:.72rem;color:var(--muted)}
+.fc .ex{font-size:.88rem}
+.fc .b .ar{font-size:1.2rem;color:var(--ink)}
+@media (prefers-reduced-motion:reduce){.fc .in{transition:none}}
+
+/* mini graphs */
+.mg{width:100%;max-width:340px;height:auto;display:block}
+.fc .mg{max-width:180px;margin-top:4px}
+.mg .ax{stroke:var(--muted);stroke-width:1.5}
+.mg .gr{stroke:var(--line);stroke-width:1}
+.mg .l1{fill:none;stroke:var(--pop);stroke-width:5;stroke-linecap:round;stroke-linejoin:round}
+.mg .l2{fill:none;stroke:var(--pri);stroke-width:5;stroke-linecap:round;stroke-linejoin:round}
+.mg text{font-size:13px;font-weight:800;font-family:var(--font-body)}
+.mg .t1{fill:var(--pop)} .mg .t2{fill:var(--pri)}
+.draw{stroke-dasharray:1;stroke-dashoffset:1;animation:draw 1.8s ease-out forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
+@media (prefers-reduced-motion:reduce){.draw{animation:none;stroke-dashoffset:0}}
+
+/* quiz */
+.qtop{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+.bar{height:10px;border-radius:99px;background:var(--line);overflow:hidden;margin-bottom:14px}
+.bar > div{height:100%;background:linear-gradient(90deg,var(--pri),var(--pop));width:0;transition:width .3s}
+.qcat{display:inline-block;background:var(--pop-soft);color:var(--pop);font-weight:800;font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;border-radius:99px;padding:3px 10px}
+.qtext{font-size:1.35rem;font-weight:700;margin:10px 0 6px;max-width:40ch}
+.qtext .gap{display:inline-block;min-width:90px;border-bottom:3px solid var(--pop)}
+.qar{font-size:1.6rem;color:var(--ink);margin:6px 0}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-top:14px}
+.opt{text-align:left;border:2px solid var(--line);background:var(--bg);border-radius:12px;padding:12px 14px;font-weight:700;font-size:1.02rem;display:flex;gap:10px;align-items:center}
+.opt .k{flex:0 0 28px;height:28px;border-radius:8px;display:inline-grid;place-items:center;background:var(--card);border:1.5px solid var(--line);font-size:.8rem;color:var(--muted)}
+.opt:hover:not([disabled]){border-color:var(--pri)}
+.opt.right{border-color:var(--good);background:var(--good-soft)}
+.opt.wrong{border-color:var(--bad);background:var(--bad-soft)}
+.opt[disabled]{cursor:default}
+.fb{margin-top:14px;border-radius:12px;padding:12px 14px;font-size:.96rem}
+.fb.good{background:var(--good-soft)} .fb.bad{background:var(--bad-soft)}
+.fb b{display:block}
+.badge-pop{position:fixed;left:50%;top:22%;transform:translate(-50%,-50%) scale(.6);background:var(--card);border:3px solid var(--gold);border-radius:18px;padding:18px 26px;text-align:center;z-index:40;opacity:0;pointer-events:none;transition:all .35s;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+.badge-pop.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
+.badge-pop .bi{font-size:2.2rem;color:var(--gold);font-weight:900;font-family:var(--font-display)}
+.badges{display:flex;gap:8px;flex-wrap:wrap}
+.bdg{border:2px solid var(--line);border-radius:12px;padding:6px 12px;font-size:.85rem;font-weight:700;color:var(--muted)}
+.bdg.got{border-color:var(--gold);color:var(--ink);background:var(--pop-soft)}
+
+/* results */
+.res-big{font-family:var(--font-display);font-size:3.4rem;font-weight:900;color:var(--pop);line-height:1;font-variant-numeric:tabular-nums}
+.bk{display:grid;gap:8px;margin-top:12px}
+.bk .r{display:grid;grid-template-columns:minmax(0,1fr) 120px 52px;gap:10px;align-items:center;font-size:.92rem}
+.bk .m{height:10px;border-radius:99px;background:var(--line);overflow:hidden}
+.bk .m div{height:100%;background:var(--pri)}
+.bk .p{text-align:right;font-variant-numeric:tabular-nums;font-weight:700}
+.review{display:grid;gap:8px;margin-top:10px}
+.rv{border-left:4px solid var(--bad);background:var(--bg);border-radius:0 10px 10px 0;padding:8px 12px;font-size:.92rem}
+.cert{border:6px double var(--head);border-radius:16px;padding:26px 18px;text-align:center;background:var(--card)}
+.cert h2{font-size:1.9rem}
+.cert .who{font-family:var(--font-display);font-size:1.8rem;color:var(--pop);border-bottom:2px solid var(--line);display:inline-block;padding:0 18px 4px;margin:8px 0}
+.locked{opacity:.55}
+footer{text-align:center;padding-block:18px 30px;color:var(--muted);font-size:.88rem}
+#confetti{position:fixed;inset:0;pointer-events:none;z-index:50}
+#printArea{display:none}
+@media print{body > *:not(#printArea){display:none!important}#printArea{display:block;font-family:Georgia,serif;color:#000}.pc{border:6px double #1f5c3f;padding:50pt;text-align:center;margin-top:60pt}}
+@media (max-width:560px){ .bk .r{grid-template-columns:minmax(0,1fr) 70px 46px} .qtext{font-size:1.15rem} }
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap hd">
+    <div class="t"><h1>Line Graph Word Quiz</h1><small>IELTS Writing Task 1 vocabulary · <span class="ar">مفردات وصف الرسوم البيانية الخطية</span></small></div>
+    <div class="stats"><span class="pill" id="hPts">0 pts</span><span class="pill" id="hStreak">Streak 0</span></div>
+    <div class="row"><button class="tb" type="button" id="saveB">Save progress</button><button class="tb" type="button" id="loadB">Load progress</button><input type="file" id="fileIn" accept=".json" hidden></div>
+  </div>
+</header>
+<div class="wrap"><nav class="tabs" id="tabs">
+  <button class="tab on" type="button" data-v="home">Start</button>
+  <button class="tab" type="button" data-v="study">Study the words</button>
+  <button class="tab" type="button" data-v="quiz">Quiz</button>
+  <button class="tab" type="button" data-v="res">Results</button>
+</nav></div>
+<main class="wrap">
+  <section class="view on" id="v-home"></section>
+  <section class="view" id="v-study"></section>
+  <section class="view" id="v-quiz"></section>
+  <section class="view" id="v-res"></section>
+</main>
+<footer class="wrap">Designed by: <b>Nazila Motahari</b> · Line Graph Word Quiz · companion to Line Graph Sentence Studio</footer>
+<div class="badge-pop" id="badgePop" role="status" aria-live="polite"></div>
+<canvas id="confetti"></canvas>
+<div id="printArea"></div>
+<script>
+/* ============ SHAPES (0 = bottom, 100 = top) ============ */
+const SH={
+  sharpRise:[15,18,22,75,86], slightRise:[40,42,44,46,48], steadyRise:[10,28,46,64,82],
+  sharpFall:[86,82,78,25,14], slightFall:[60,58,57,55,53], steadyFall:[85,67,49,31,13],
+  stable:[50,50,51,50,50], fluctuate:[40,66,34,62,38], peak:[20,45,86,50,30], low:[72,45,12,40,62],
+  levelOff:[10,40,66,71,72], recover:[72,40,22,46,64],
+  overA:[80,70,55,40,30], overB:[20,35,50,65,76]
+};
+function mini(a,b,cls=''){
+  const W=300,H=150,L=24,R=40,T=14,B=18,pw=W-L-R,ph=H-T-B;
+  const P=arr=>arr.map((v,i)=>(i?'L':'M')+(L+i*pw/(arr.length-1)).toFixed(1)+' '+(T+ph-v/100*ph).toFixed(1)).join(' ');
+  let s=`<svg class="mg ${cls}" viewBox="0 0 ${W} ${H}" aria-hidden="true">`;
+  [0,50,100].forEach(v=>s+=`<line class="gr" x1="${L}" x2="${L+pw}" y1="${T+ph-v/100*ph}" y2="${T+ph-v/100*ph}"/>`);
+  s+=`<line class="ax" x1="${L}" y1="${T}" x2="${L}" y2="${T+ph}"/><line class="ax" x1="${L}" y1="${T+ph}" x2="${L+pw}" y2="${T+ph}"/>`;
+  s+=`<path class="l1 draw" pathLength="1" d="${P(a)}"/>`;
+  if(b){ s+=`<path class="l2 draw" pathLength="1" d="${P(b)}"/>`;
+    s+=`<text class="t1" x="${L+pw+6}" y="${T+ph-a[a.length-1]/100*ph+5}">A</text><text class="t2" x="${L+pw+6}" y="${T+ph-b[b.length-1]/100*ph+5}">B</text>`; }
+  return s+'</svg>';
+}
+
+/* ============ STUDY WORDS ============ */
+const CATS=['Going up','Going down','Steady or up and down','Key points','How much?','Numbers','Linking','Small words'];
+const WORDS=[
+ ['Going up','rise → rose','ارتفع','Sales rose from 20% to 35%.','steadyRise'],
+ ['Going up','increase → increased','زاد','The number of users increased steadily.','steadyRise'],
+ ['Going up','grow → grew','نما','Online shopping grew rapidly after 2015.','steadyRise'],
+ ['Going up','climb → climbed','صعد','Prices climbed to 60% in 2020.','steadyRise'],
+ ['Going up','soar → soared','ارتفع بشدة','Visitor numbers soared in 2022.','sharpRise'],
+ ['Going down','fall → fell','انخفض','Car use fell between 2010 and 2020.','steadyFall'],
+ ['Going down','decrease → decreased','تناقص','The figure decreased slightly.','slightFall'],
+ ['Going down','drop → dropped','هبط','Library visits dropped to 22%.','steadyFall'],
+ ['Going down','decline → declined','تراجع','Cash use declined steadily.','steadyFall'],
+ ['Going down','plummet → plummeted','انخفض بشكل حاد جداً','Sales plummeted in 2016.','sharpFall'],
+ ['Steady or up and down','remain stable','ظلّ مستقراً','The figure remained stable at 50%.','stable'],
+ ['Steady or up and down','level off','استقرّ (بعد ارتفاع أو انخفاض)','After rising, the figure levelled off at 70%.','levelOff'],
+ ['Steady or up and down','fluctuate','تذبذب','Visits fluctuated between 30% and 35%.','fluctuate'],
+ ['Steady or up and down','recover','تعافى / عاد للارتفاع','After 2020, the figure recovered to 64%.','recover'],
+ ['Key points','reach a peak (of)','بلغ الذروة','E-book use reached a peak of 58%.','peak'],
+ ['Key points','hit a low (of)','وصل إلى أدنى مستوى','The figure hit a low of 12% in 2012.','low'],
+ ['Key points','overtake → overtook','تجاوز','Line B overtook Line A in 2014.','over'],
+ ['How much?','sharply / sharp','بشكل حاد / حاد','rose sharply · a sharp rise','sharpRise'],
+ ['How much?','dramatically / dramatic','بشكل كبير جداً','fell dramatically · a dramatic fall',''],
+ ['How much?','significantly / significant','بشكل ملحوظ','increased significantly · a significant increase',''],
+ ['How much?','considerably / considerable','بشكل كبير','dropped considerably · a considerable drop',''],
+ ['How much?','rapidly / rapid','بسرعة / سريع','grew rapidly · rapid growth',''],
+ ['How much?','steadily / steady','بثبات / ثابت','declined steadily · a steady decline','steadyFall'],
+ ['How much?','gradually / gradual','تدريجياً / تدريجي','rose gradually · a gradual rise',''],
+ ['How much?','slightly / slight','قليلاً / طفيف','fell slightly · a slight fall','slightFall'],
+ ['How much?','marginally / marginal','بشكل طفيف جداً','rose marginally · a marginal rise','slightRise'],
+ ['Numbers','just over','أكثر بقليل من','41% = just over 40%',''],
+ ['Numbers','just under / almost','أقل بقليل من / تقريباً','59% = almost 60%',''],
+ ['Numbers','approximately / around','تقريباً / حوالي','approximately 30% (for 29% or 31%)',''],
+ ['Numbers','a quarter · a third · half','ربع · ثلث · نصف','25% · 33% · 50%',''],
+ ['Numbers','two thirds · three quarters','ثلثان · ثلاثة أرباع','67% · 75%',''],
+ ['Linking','overall','بشكل عام','Overall, digital reading became more popular.',''],
+ ['Linking','whereas / while','بينما / في حين','Cash fell, whereas card use rose.',''],
+ ['Linking','in contrast','على النقيض','In contrast, wind power changed little.',''],
+ ['Linking','similarly / likewise','بالمثل / كذلك','Similarly, audiobooks grew.',''],
+ ['Linking','however','ومع ذلك','However, the rise was small.',''],
+ ['Small words','from … to','من … إلى','rose from 20% to 35%',''],
+ ['Small words','by','بمقدار','increased by 15% (the difference)',''],
+ ['Small words','of / at','بقيمة / عند','a peak of 60% · stood at 8%',''],
+ ['Small words','over / throughout the period','خلال الفترة كلها','remained stable throughout the period','']
+];
+
+/* ============ QUESTIONS (first option = correct) ============ */
+const Q=[
+ // Read the line
+ {c:'Read the line', g:'sharpRise', q:'Which phrase best describes the line?', o:['rose sharply','fell sharply','rose slightly','stayed stable'], w:'The line climbs a lot in a short time, so it rose sharply.', ar:'ارتفع بشكل حاد'},
+ {c:'Read the line', g:'slightFall', q:'Which phrase best describes the line?', o:['fell slightly','rose slightly','fell sharply','fluctuated'], w:'The line goes down only a little, so it fell slightly.', ar:'انخفض قليلاً'},
+ {c:'Read the line', g:'stable', q:'Which phrase best describes the line?', o:['remained stable','fluctuated wildly','rose gradually','dropped sharply'], w:'The line hardly moves, so it remained stable.', ar:'ظلّ مستقراً'},
+ {c:'Read the line', g:'fluctuate', q:'Which phrase best describes the line?', o:['fluctuated','remained stable','rose steadily','fell slightly'], w:'The line goes up and down again and again, so it fluctuated.', ar:'تذبذب'},
+ {c:'Read the line', g:'peak', q:'Which phrase best describes the line?', o:['peaked and then fell','fell and then recovered','rose throughout the period','remained level at first'], w:'The line goes up to a highest point (a peak) and then comes down.', ar:'بلغ الذروة ثم انخفض'},
+ {c:'Read the line', g:'low', q:'Which phrase best describes the line?', o:['hit a low, then recovered','fell throughout the period','reached a peak, then fell','rose steadily for the whole time'], w:'The line falls to its lowest point, then goes back up, so it hit a low and recovered.', ar:'وصل إلى أدنى مستوى ثم تعافى'},
+ {c:'Read the line', g:'levelOff', q:'Which phrase best describes the line?', o:['rose and then levelled off','fell and then levelled off','fluctuated around the same level','rose sharply at the very end'], w:'The line rises, then becomes flat. "Level off" means stop changing after a rise or fall.', ar:'ارتفع ثم استقر'},
+ {c:'Read the line', g:'steadyFall', q:'Which phrase best describes the line?', o:['declined steadily','increased steadily','declined slightly at first','fluctuated a lot'], w:'The line goes down by the same amount each time, so it declined steadily.', ar:'تراجع بثبات'},
+ {c:'Read the line', g:'over', q:'What happened to Line B?', o:['overtook Line A','fell below Line A','stayed below Line A all the time','remained the same as Line A'], w:'Line B started lower but went higher than Line A, so it overtook Line A.', ar:'تجاوز الخط أ'},
+ {c:'Read the line', g:'slightRise', q:'Which phrase best describes the line?', o:['increased marginally','increased dramatically','decreased marginally','fluctuated dramatically'], w:'The change is very small and upward, so it increased marginally.', ar:'زاد بشكل طفيف جداً'},
+ // Meaning
+ {c:'Meaning', qa:'تذبذب', q:'Which English word has this meaning?', o:['fluctuated','levelled off','overtook','declined'], w:'Fluctuated = went up and down.'},
+ {c:'Meaning', qa:'تجاوز', q:'Which English word has this meaning?', o:['overtook','dropped','recovered','remained'], w:'Overtook = went higher than another line.'},
+ {c:'Meaning', qa:'بلغ الذروة', q:'Which English phrase has this meaning?', o:['reached a peak','hit a low point','levelled off','remained stable'], w:'Reached a peak = reached the highest point.'},
+ {c:'Meaning', qa:'تدريجياً', q:'Which English word has this meaning?', o:['gradually','dramatically','slightly','considerably'], w:'Gradually = slowly, over a long time.'},
+ {c:'Meaning', qa:'استقرّ بعد ارتفاع', q:'Which English phrase has this meaning?', o:['levelled off','fluctuated','overtook','decreased sharply'], w:'Levelled off = became flat after rising or falling.'},
+ {c:'Meaning', qa:'انخفض بشكل حاد جداً', q:'Which English word has this meaning?', o:['plummeted','soared','recovered','fluctuated'], w:'Plummeted = fell very fast and very far. Soared is the opposite.'},
+ {c:'Meaning', qa:'تعافى / عاد للارتفاع', q:'Which English word has this meaning?', o:['recovered','declined','peaked','stabilised'], w:'Recovered = went back up after a fall.'},
+ // Complete the sentence
+ {c:'Complete the sentence', q:'The number of visitors rose ___ 20% to 35%.', o:['from','with','by','at'], w:'"from X to Y" gives the start and end figures.', ar:'من … إلى'},
+ {c:'Complete the sentence', q:'Sales increased ___ 15%, from 20% to 35%.', o:['by','to','at','from'], w:'"by" gives the size of the change: 35 − 20 = 15.', ar:'بمقدار'},
+ {c:'Complete the sentence', q:'The figure reached a peak ___ 60% in 2012.', o:['of','at','in','from'], w:'We say "a peak of" + number.', ar:'ذروة بقيمة'},
+ {c:'Complete the sentence', q:'Unemployment stood ___ 8% in 2004.', o:['at','of','by','on'], w:'We say "stood at / remained at" + number.', ar:'عند'},
+ {c:'Complete the sentence', q:'___, the percentage of students using e-books rose over the period.', o:['Overall','Finally','Because','Although'], w:'"Overall" starts the overview: the big picture.', ar:'بشكل عام'},
+ {c:'Complete the sentence', q:'Car use fell ___ cycling rose.', o:['while','similarly','so','despite'], w:'"while" joins two opposite trends in one sentence.', ar:'في حين'},
+ {c:'Complete the sentence', q:'Prices rose sharply. ___, wages increased only slightly.', o:['However','Similarly','Likewise','Therefore'], w:'The two facts are different, so we use a contrast word: However.', ar:'ومع ذلك'},
+ {c:'Complete the sentence', q:'Line A increased by 10%. ___, Line B grew by 12%.', o:['Similarly','In contrast','Although','Whereas'], w:'Both lines rose, so we show a similarity.', ar:'بالمثل'},
+ {c:'Complete the sentence', q:'The figure remained stable ___ the period.', o:['throughout','between','afterwards','since'], w:'"throughout the period" = for the whole time.', ar:'طوال الفترة'},
+ // Word form
+ {c:'Word form', q:'There was a ___ rise in prices.', o:['sharp','sharply','sharpen','sharpness'], w:'Before a noun (rise) we need an adjective: sharp.', ar:'صفة قبل الاسم'},
+ {c:'Word form', q:'Prices rose ___ in 2020.', o:['dramatically','dramatic','drama','more dramatic'], w:'After a verb (rose) we need an adverb: dramatically.', ar:'ظرف بعد الفعل'},
+ {c:'Word form', q:'There was a gradual ___ in sales.', o:['decline','declined','declining','to decline'], w:'After "a gradual" we need a noun: decline.', ar:'اسم بعد الصفة'},
+ {c:'Word form', q:'The number of users ___ steadily.', o:['increased','increase','increasing','an increase'], w:'The sentence needs a past-tense verb: increased.', ar:'فعل في الماضي'},
+ {c:'Word form', q:'There was a ___ in the number of tourists after 2015.', o:['fall','fell','fallen','falling'], w:'"There was a" + noun: fall. "Fell" is the verb.', ar:'اسم'},
+ {c:'Word form', q:'The percentage ___ at 30% for five years.', o:['remained','remaining','to remain','remainder'], w:'The sentence needs a past-tense verb: remained.', ar:'ظلّ'},
+ // Approximate numbers
+ {c:'Numbers', q:'41% is ___ 40%.', o:['just over','just under','exactly','nearly'], w:'41 is a little more than 40, so "just over 40%".', ar:'أكثر بقليل'},
+ {c:'Numbers', q:'59% is ___ 60%.', o:['almost','just over','well above','exactly'], w:'59 is a little less than 60, so "almost 60%" (or "just under 60%").', ar:'تقريباً'},
+ {c:'Numbers', q:'25% is ___ of the total.', o:['a quarter','a third','half','three quarters'], w:'25% = one quarter (1/4).', ar:'ربع'},
+ {c:'Numbers', q:'67% is about ___ of the total.', o:['two thirds','one third','a quarter','three quarters'], w:'67% ≈ 2/3, so "about two thirds".', ar:'ثلثان'},
+ {c:'Numbers', q:'50% is ___ of the total.', o:['half','a third','most','a quarter'], w:'50% = half.', ar:'نصف'},
+ // Odd one out
+ {c:'Odd one out', q:'Which word is different?', o:['fell','increased','climbed','grew'], w:'"fell" goes down; the others go up.', ar:'انخفض'},
+ {c:'Odd one out', q:'Which word is different?', o:['soared','dropped','decreased','declined'], w:'"soared" goes up very fast; the others go down.', ar:'ارتفع بشدة'},
+ {c:'Odd one out', q:'Which word is different?', o:['slightly','sharply','dramatically','significantly'], w:'"slightly" means a small change; the others mean a big change.', ar:'قليلاً'},
+ {c:'Odd one out', q:'Which word is different?', o:['similarly','whereas','in contrast','while'], w:'"similarly" shows the same; the others show a difference.', ar:'بالمثل'}
+];
+const QCATS=['Read the line','Meaning','Complete the sentence','Word form','Numbers','Odd one out'];
+const BADGES=[['first','First correct answer'],['s5','Streak of 5'],['s10','Streak of 10'],['reader','Graph Reader: all line questions right'],['half','Halfway there'],['done','Quiz finished']];
+
+/* ============ STATE ============ */
+let S=fresh();
+function fresh(){ return {v:1,name:'',order:[],opt:{},ans:{},idx:0,pts:0,streak:0,best:0,badges:[],view:'home',retry:null}; }
+const $=s=>document.querySelector(s);
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function shuf(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function ensureOrder(){
+  if(S.order.length!==Q.length) S.order=shuf(Q.map((_,i)=>i));
+  Q.forEach((q,i)=>{ if(!S.opt[i]||S.opt[i].length!==q.o.length) S.opt[i]=shuf(q.o.map((_,k)=>k)); });
+}
+function shape(q){ if(!q.g) return ''; return q.g==='over'?mini(SH.overA,SH.overB):mini(SH[q.g]); }
+
+/* ============ VIEWS ============ */
+function show(v){ S.view=v; document.querySelectorAll('.view').forEach(e=>e.classList.toggle('on',e.id==='v-'+v)); document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t.dataset.v===v));
+  if(v==='quiz') renderQ(); if(v==='res') renderRes(); if(v==='study') renderStudy(); window.scrollTo({top:0,behavior:'smooth'}); }
+function renderHome(){
+  const types=[['Read the line','Watch a line draw itself and choose the right phrase.'],['Meaning','Match the Arabic to the English word.'],['Complete the sentence','Small words and linking words.'],['Word form','Adjective or adverb? Verb or noun?'],['Numbers','just over, almost, a quarter, two thirds…'],['Odd one out','Find the word that does not belong.']];
+  $('#v-home').innerHTML=`<div class="home"><div class="card"><span class="eyebrow">Start here</span><h2>The words that make line graphs talk</h2>
+   <p style="max-width:62ch">${Q.length} questions on the vocabulary you need for Task 1 line graphs: trend verbs, adverbs, key points, numbers and linking words. Study the word cards first, then take the quiz. Every correct answer is worth 10 points. Score 80% or more for your certificate.</p>
+   <p class="ar">ادرس البطاقات أولاً، ثم ابدأ الاختبار. احصل على 80٪ أو أكثر للحصول على الشهادة.</p>
+   <label for="nm"><b>Your name</b></label><br><input id="nm" class="name-in" value="${esc(S.name)}" placeholder="Type your full name">
+   <div class="row" style="margin-top:14px"><button class="btn ghost" type="button" data-go="study">Study the words</button><button class="btn pop" type="button" data-go="quiz">${Object.keys(S.ans).length?'Continue the quiz':'Start the quiz'}</button></div></div>
+   <div class="card"><h3 style="font-size:1.05rem;margin-bottom:10px">Six kinds of question</h3><div class="types">${types.map(t=>`<div class="type"><b>${t[0]}</b><span>${t[1]}</span></div>`).join('')}</div></div></div>`;
+}
+let studyCat='Going up';
+function renderStudy(){
+  const list=WORDS.filter(w=>w[0]===studyCat);
+  $('#v-study').innerHTML=`<div class="card" style="margin-bottom:14px"><span class="eyebrow">Study the words</span><h2 style="font-size:1.5rem;margin:4px 0">Tap a card to see the Arabic and an example</h2><p class="ar">اضغط على البطاقة لرؤية المعنى ومثال</p></div>
+  <div class="cats">${CATS.map(c=>`<button type="button" class="cat ${c===studyCat?'on':''}" data-cat="${c}">${c}</button>`).join('')}</div>
+  <div class="grid">${list.map((w,i)=>`<button type="button" class="fc" aria-label="${esc(w[1])}"><div class="in">
+    <div class="f"><span class="g">${esc(w[0])}</span><span class="w">${esc(w[1])}</span>${w[4]?(w[4]==='over'?mini(SH.overA,SH.overB):mini(SH[w[4]])):''}<span class="tap">Tap to turn over</span></div>
+    <div class="b"><span class="ar">${esc(w[2])}</span><span class="ex"><b>Example:</b> ${esc(w[3])}</span><span class="tap">Tap to turn back</span></div></div></button>`).join('')}</div>
+  <div class="row" style="margin-top:16px"><button class="btn pop" type="button" data-go="quiz">I'm ready for the quiz</button></div>`;
+}
+function renderQ(){
+  ensureOrder();
+  const pool = S.retry || S.order;
+  if(S.idx>=pool.length){ if(S.retry){ S.retry=null; S.idx=0; toast('Practice round finished!'); show('res'); return;} show('res'); return; }
+  const qi=pool[S.idx], q=Q[qi], answered = !S.retry && S.ans[qi]!=null;
+  const done=Object.keys(S.ans).length;
+  const opts=S.opt[qi].map((k,j)=>{ let cls=''; if(answered){ if(k===0) cls='right'; else if(k===S.ans[qi]) cls='wrong'; }
+    return `<button type="button" class="opt ${cls}" data-k="${k}" ${answered?'disabled':''}><span class="k">${'ABCD'[j]}</span>${esc(q.o[k])}</button>`; }).join('');
+  $('#v-quiz').innerHTML=`<div class="card">
+   <div class="qtop"><span>${S.retry?'<b>Practice round:</b> ':''}Question <b>${S.idx+1}</b> of ${pool.length}</span><span class="qcat">${esc(q.c)}</span></div>
+   <div class="bar"><div style="width:${(S.retry?S.idx/pool.length:done/Q.length)*100}%"></div></div>
+   ${q.g?`<div>${shape(q)}</div>`:''}
+   ${q.qa?`<div class="qar ar">${esc(q.qa)}</div>`:''}
+   <p class="qtext">${esc(q.q).replace('___','<span class="gap">&nbsp;</span>')}</p>
+   <div class="opts">${opts}</div>
+   <div id="fb">${answered?fbHTML(q,S.ans[qi]===0):''}</div>
+   <div class="row" style="margin-top:14px;justify-content:space-between">${q.g?'<button class="btn ghost" type="button" id="replay">Replay the line</button>':'<span></span>'}<button class="btn" type="button" id="next" ${answered?'':'hidden'}>${S.idx+1>=pool.length?'See my results':'Next question →'}</button></div></div>`;
+}
+function fbHTML(q,ok){ return `<div class="fb ${ok?'good':'bad'}"><b>${ok?'Correct!':'Not quite. The answer is "'+esc(q.o[0])+'".'}</b>${esc(q.w)}${q.ar?` <span class="ar">${esc(q.ar)}</span>`:''}</div>`; }
+function answer(k){
+  const pool=S.retry||S.order, qi=pool[S.idx], q=Q[qi], ok=k===0;
+  if(!S.retry){
+    if(S.ans[qi]!=null) return;
+    S.ans[qi]=k;
+    if(ok){ S.pts+=10; S.streak++; S.best=Math.max(S.best,S.streak); } else S.streak=0;
+    if(ok) award('first'); if(S.streak>=5) award('s5'); if(S.streak>=10) award('s10');
+    const lineQs=Q.map((x,i)=>i).filter(i=>Q[i].g); if(lineQs.every(i=>S.ans[i]===0)) award('reader');
+    if(Object.keys(S.ans).length>=Math.ceil(Q.length/2)) award('half');
+    if(Object.keys(S.ans).length===Q.length){ award('done'); if(score().pct>=80) setTimeout(confetti,600); }
+  }
+  document.querySelectorAll('.opt').forEach(b=>{ const kk=+b.dataset.k; b.disabled=true; if(kk===0) b.classList.add('right'); else if(kk===k) b.classList.add('wrong'); });
+  $('#fb').innerHTML=fbHTML(q,ok); $('#next').hidden=false; head();
+}
+function score(){ const n=Q.filter((_,i)=>S.ans[i]===0).length; return {n, pct:Math.round(n/Q.length*100), done:Object.keys(S.ans).length}; }
+function renderRes(){
+  const sc=score(), all=sc.done===Q.length, certOk=all&&sc.pct>=80;
+  const bk=QCATS.map(c=>{const ids=Q.map((q,i)=>i).filter(i=>Q[i].c===c), r=ids.filter(i=>S.ans[i]===0).length; const p=Math.round(r/ids.length*100); return `<div class="r"><span>${c}</span><div class="m"><div style="width:${p}%"></div></div><span class="p">${r}/${ids.length}</span></div>`;}).join('');
+  const wrong=Q.map((q,i)=>i).filter(i=>S.ans[i]!=null&&S.ans[i]!==0);
+  $('#v-res').innerHTML=`<div style="display:grid;gap:14px">
+   <div class="card"><span class="eyebrow">Your results</span><div class="row" style="gap:18px;margin-top:6px"><span class="res-big">${sc.pct}%</span><span>${sc.n} correct out of ${Q.length}<br>${sc.done<Q.length?`<b>${Q.length-sc.done} questions still to answer.</b>`:'Quiz complete.'}<br>Points: <b>${S.pts}</b> · Best streak: <b>${S.best}</b></span></div>
+   <div class="bk">${bk}</div></div>
+   <div class="card"><h3 style="font-size:1.05rem;margin-bottom:8px">Badges</h3><div class="badges">${BADGES.map(b=>`<span class="bdg ${S.badges.includes(b[0])?'got':''}">${S.badges.includes(b[0])?'★ ':''}${b[1]}</span>`).join('')}</div></div>
+   ${wrong.length?`<div class="card"><h3 style="font-size:1.05rem">Words to review <span class="ar">كلمات للمراجعة</span></h3><div class="review">${wrong.map(i=>`<div class="rv">${Q[i].g?`<div style="max-width:160px">${shape(Q[i])}</div>`:''}<b>${esc(Q[i].q.replace('___','…'))}</b>${Q[i].qa?` <span class="ar">${esc(Q[i].qa)}</span>`:''}<br>Your answer: ${esc(Q[i].o[S.ans[i]])} · Correct: <b>${esc(Q[i].o[0])}</b></div>`).join('')}</div>
+     <div class="row" style="margin-top:12px"><button class="btn" type="button" id="retry">Practise my wrong answers</button><span class="ar" style="font-size:.9rem">هذه الجولة للتدريب ولا تغيّر درجتك</span></div></div>`:''}
+   <div class="cert ${certOk?'':'locked'}"><span class="eyebrow">Certificate of achievement</span><h2>Line Graph Word Quiz</h2><p>This certifies that</p><div class="who">${esc(S.name||'Your name')}</div><p>has mastered the vocabulary for describing line graphs<br>with a score of <b>${sc.pct}%</b>.</p><p style="font-size:.85rem;color:var(--muted)">${new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})} · Designed by: Nazila Motahari</p>
+    ${certOk?'<button class="btn pop" type="button" id="printC">Print / save certificate</button>':`<p><b>Locked.</b> ${all?`You need 80% (you have ${sc.pct}%). Click <b>Start again</b> to try for a higher score.`:'Answer all the questions and score 80% or more.'}</p>`}</div>
+   <div class="row"><button class="btn ghost" type="button" id="restart">Start again (new order)</button></div></div>`;
+}
+function head(){ $('#hPts').textContent=S.pts+' pts'; $('#hStreak').textContent='Streak '+S.streak; }
+function award(id){ if(S.badges.includes(id)) return; S.badges.push(id); const b=BADGES.find(x=>x[0]===id); const el=$('#badgePop'); el.innerHTML=`<div class="bi">★</div><b>New badge</b><br>${b[1]}`; el.classList.add('show'); clearTimeout(award.t); award.t=setTimeout(()=>el.classList.remove('show'),1800); }
+function toast(m){ const el=$('#badgePop'); el.innerHTML=`<b>${m}</b>`; el.classList.add('show'); setTimeout(()=>el.classList.remove('show'),1600); }
+
+/* ============ EVENTS ============ */
+document.addEventListener('click',e=>{
+  const t=e.target;
+  const tab=t.closest('.tab'); if(tab){ show(tab.dataset.v); return; }
+  const go=t.closest('[data-go]'); if(go){ show(go.dataset.go); return; }
+  const cat=t.closest('.cat'); if(cat){ studyCat=cat.dataset.cat; renderStudy(); return; }
+  const fc=t.closest('.fc'); if(fc){ fc.classList.toggle('flip'); return; }
+  const op=t.closest('.opt'); if(op&&!op.disabled){ answer(+op.dataset.k); return; }
+  if(t.id==='next'){ S.idx++; renderQ(); window.scrollTo({top:0,behavior:'smooth'}); return; }
+  if(t.id==='replay'){ document.querySelectorAll('#v-quiz .draw').forEach(p=>{p.classList.remove('draw');void p.getBoundingClientRect();p.classList.add('draw');}); return; }
+  if(t.id==='retry'){ S.retry=shuf(Q.map((_,i)=>i).filter(i=>S.ans[i]!=null&&S.ans[i]!==0)); S.idx=0; show('quiz'); return; }
+  if(t.id==='restart'){ const n=S.name; S=fresh(); S.name=n; ensureOrder(); head(); renderHome(); show('quiz'); return; }
+  if(t.id==='printC'){ const sc=score(); $('#printArea').innerHTML=`<div class="pc"><p style="letter-spacing:.2em;text-transform:uppercase">Certificate of achievement</p><h1>Line Graph Word Quiz</h1><p>This certifies that</p><h1 style="color:#c2185b">${esc(S.name)}</h1><p>has mastered the vocabulary for describing line graphs with a score of <b>${sc.pct}%</b>.</p><p>${new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})}</p><p>Designed by: Nazila Motahari</p></div>`; setTimeout(()=>window.print(),200); }
+});
+document.addEventListener('input',e=>{ if(e.target.id==='nm') S.name=e.target.value; });
+document.addEventListener('keydown',e=>{ if(S.view!=='quiz') return; const i='abcd'.indexOf(e.key.toLowerCase()); if(i>=0){ const b=document.querySelectorAll('.opt')[i]; if(b&&!b.disabled) b.click(); } if(e.key==='Enter'){ const n=$('#next'); if(n&&!n.hidden) n.click(); } });
+$('#saveB').onclick=()=>{ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([JSON.stringify({app:'line-graph-word-quiz',saved:new Date().toISOString(),S})],{type:'application/json'})); a.download='line-graph-word-quiz-'+(S.name||'progress').replace(/[^a-z0-9]+/gi,'-').toLowerCase()+'.json'; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},500); toast('Progress saved'); };
+$('#loadB').onclick=()=>$('#fileIn').click();
+$('#fileIn').onchange=e=>{ const f=e.target.files[0]; if(!f) return; const r=new FileReader(); r.onload=()=>{ try{ const d=JSON.parse(r.result); if(d.app!=='line-graph-word-quiz') throw 0; S=Object.assign(fresh(),d.S); S.retry=null; ensureOrder(); head(); renderHome(); show(S.view==='res'?'res':'quiz'); toast('Welcome back!'); }catch(_){ toast('That is not a Line Graph Word Quiz file'); } }; r.readAsText(f); e.target.value=''; };
+
+function confetti(){ if(matchMedia('(prefers-reduced-motion: reduce)').matches) return; const c=$('#confetti'),x=c.getContext('2d'); c.width=innerWidth;c.height=innerHeight; const cols=['#1f7a4f','#c2185b','#c98a00','#5fd39a','#ff6fa5'];
+  const ps=Array.from({length:140},()=>({x:Math.random()*c.width,y:-20-Math.random()*c.height*.4,w:6+Math.random()*6,h:8+Math.random()*8,vy:2+Math.random()*3,vx:-1.5+Math.random()*3,r:Math.random()*6,vr:-.2+Math.random()*.4,col:cols[Math.floor(Math.random()*cols.length)]}));
+  let f=0;(function st(){x.clearRect(0,0,c.width,c.height);ps.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.r+=p.vr;x.save();x.translate(p.x,p.y);x.rotate(p.r);x.fillStyle=p.col;x.fillRect(-p.w/2,-p.h/2,p.w,p.h);x.restore();});if(++f<160)requestAnimationFrame(st);else x.clearRect(0,0,c.width,c.height);})(); }
+
+ensureOrder(); head(); renderHome();
+</script>
+</body>
+</html>
